@@ -1,7 +1,7 @@
 #page-home {
     height: 120vh;
   
-    background: url('../../assets/home-background.svg') no-repeat 600px bottom;
+    /* background: url('../../assets/home-background.svg') no-repeat 600px bottom; */
   }
   
   #page-home .content {
@@ -23,10 +23,12 @@
   #page-home .content main {
     flex: 1;
     max-width: 560px;
+    margin-left: auto;
+    margin-right: auto;
   
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction:column;
+    justify-content:center;
   }
   
   #page-home .content main h1 {
@@ -42,11 +44,12 @@
   
   #page-home .content main a {
     width: 100%;
-    max-width: 360px;
     height: 72px;
     background: var(--primary-color);
     border-radius: 8px;
     text-decoration: none;
+
+    padding-right: 10px;
   
     display: flex;
     align-items: center;
@@ -104,4 +107,5 @@
     #page-home .content main p {
       font-size: 24px;
     }
+    
   }
