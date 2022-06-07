@@ -1,8 +1,7 @@
-import React, { useEffect, useState, ChangeEvent, FormEvent } from 'react';
+import React, { useEffect, useState, useMemo, useRef, ChangeEvent, FormEvent, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import { LeafletMouseEvent } from 'leaflet';
+import { MapContainer, TileLayer, Marker, useMapEvents, Popup } from 'react-leaflet';
 import axios from 'axios';
 import api from '../../services/api';
 import Dropzone from '../../components/Dropzone';
@@ -30,8 +29,6 @@ const CreatePoint = () => {
     const [ufs, setUfs] = useState<string[]>([]);
     const [cities, setCities] = useState<string[]>([]);
 
-    const [initialPosition, setInitialPosition] = useState<[number, number]>([0, 0]);
-
     const [formData, setFormData] = useState({
         name: '',
         email: '',
@@ -41,17 +38,14 @@ const CreatePoint = () => {
     const [selectedUf, setSelectedUf] = useState('0');
     const [selectedCity, setSelectedCity] = useState('0');
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
-    const [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0]);
     const [selectedFile, setSelectedFile] = useState<File>()
 
     const navigate = useNavigate();
 
-    useEffect(() => {
-        navigator.geolocation.getCurrentPosition(position => {
-            const { latitude, longitude } = position.coords;
-            setInitialPosition([latitude, longitude]);
-        })
-    }, []);
+    const [initialPosition, setInitialPosition] = useState<[number, number]>([-22.017867, -47.890855]);
+
+    const [selectedPosition, setSelectedPosition] = useState<[number, number]>([0, 0]);
+    
 
     useEffect(() => {
         api.get('items').then(response => {
@@ -79,6 +73,46 @@ const CreatePoint = () => {
 
     }, [selectedUf]);
 
+    function LocationMarker() {
+        const map = useMapEvents({
+          click() {
+            map.locate()
+          },
+          locationfound(e) {
+            setInitialPosition([e.latlng.lat, e.latlng.lng])
+            map.flyTo(e.latlng, map.getZoom())
+          },
+        })
+        const [draggable, setDraggable] = useState(false)
+        const markerRef = useRef< any | null>(null)
+        const eventHandlers = useMemo(
+            () => ({
+              dragend() {
+                const marker = markerRef.current
+                if (marker != null) {
+                  setSelectedPosition(marker.getLatLng())
+                }
+              },
+            }),
+            [],
+          )
+          const toggleDraggable = useCallback(() => {
+            setDraggable((d) => !d)
+          }, [])
+      
+        return selectedPosition === null ? null : (
+          <Marker ref={markerRef} eventHandlers={eventHandlers} draggable={draggable} position={selectedPosition}>
+              <Popup minWidth={90}>
+                    <span onClick={toggleDraggable}>
+                    {draggable
+                        ? 'Marker is draggable'
+                        : 'Click here to make marker draggable'}
+                    </span>
+                </Popup>
+          </Marker>
+        )
+    };
+
     function handleSelectUf(event: ChangeEvent<HTMLSelectElement>) {
         const uf = event.target.value;
 
@@ -89,13 +123,6 @@ const CreatePoint = () => {
         const city = event.target.value;
 
         setSelectedCity(city);
-    };
-
-    function handleMapCLick(event: LeafletMouseEvent) {
-        setSelectedPosition([
-            event.latlng.lat,
-            event.latlng.lng
-        ])
     };
 
     function handleInputChange(event: ChangeEvent<HTMLInputElement>) {
@@ -135,6 +162,11 @@ const CreatePoint = () => {
         data.append('city', city);
         data.append('latitude', String(latitude));
         data.append('longitude', String(longitude));
+        //-21.994789529032403, -47.88167748141515
+        //data.append('latitude', '-21.994789529032403');
+        //data.append('longitude', '-47.88167748141515');
+
+
         data.append('items', items.join(','));
 
         if (selectedFile) {
@@ -207,13 +239,12 @@ const CreatePoint = () => {
                             <span>Selecione o endereço no mapa</span>
                         </legend>
 
-                        <MapContainer center={initialPosition} zoom={15} onCLick={handleMapCLick} >
+                        <MapContainer center={initialPosition} zoom={13} scrollWheelZoom={false}>
                             <TileLayer
                                 attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                             />
-
-                            <Marker position={selectedPosition} />
+                            <LocationMarker />
                         </MapContainer>
 
                         <div className="field-group">
