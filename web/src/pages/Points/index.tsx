@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Container } from 'reactstrap';
 import api from "../../services/api";
@@ -107,6 +107,8 @@ const Points = () => {
         )
       }
 
+  
+
     return (
         <Container className="bg-light border">
             <div id="page-create-point">
@@ -136,8 +138,20 @@ const Points = () => {
 
                             let objLatitude = objteste[index].latitude;
                             let objLongitude = objteste[index].longitude;
+                            
+                            console.log(objteste);
+                            
+                            let img_url = "localhost:3333/uploads/" + objteste[index].image
 
-                            return <Marker position={[objLatitude, objLongitude]} key={index} icon={markerIcon}></Marker>;
+                            return <Marker position={[objLatitude, objLongitude]} key={index} icon={markerIcon}>
+
+
+                                
+                                <Popup>
+                                  <img src={img_url} /><br/>
+                                  <h4>{objteste[index].name}</h4>
+                                </Popup>
+                            </Marker>;  
                             })
                             }
                                                         
